@@ -257,7 +257,7 @@ class GoalOrientedBot(NNModel):
 
         """
         # todo naming, docs, comments
-        text = utterance_context_info_dict['text']
+        text: Union[str, Dict] = utterance_context_info_dict['text']
 
         # if there already were db lookups in this utterance
         # we inform the tracker with these lookups info
@@ -273,7 +273,8 @@ class GoalOrientedBot(NNModel):
         utterance_data_entry = UtteranceDataEntry.from_features_and_target(utterance_features, utterance_target)
         return utterance_data_entry
 
-    def extract_features_from_utterance_text(self, text, tracker, keep_tracker_state=False) -> UtteranceFeatures:
+    def extract_features_from_utterance_text(self, text: Union[str, Dict],
+                                             tracker, keep_tracker_state=False) -> UtteranceFeatures:
         """
         Extract ML features for the input text and the respective tracker.
         Features are aggregated from the
@@ -325,7 +326,8 @@ class GoalOrientedBot(NNModel):
 
         return UtteranceFeatures(nlu_response, tracker_knowledge, digitized_policy_features)
 
-    def _infer(self, user_utterance_text: str, user_tracker: DialogueStateTracker,
+    def _infer(self, user_utterance_text: Union[str, dict],
+               user_tracker: DialogueStateTracker,
                keep_tracker_state=False) -> Tuple[BatchDialoguesFeatures, PolicyPrediction]:
         """
         Predict the action to perform in response to given text.
@@ -380,7 +382,7 @@ class GoalOrientedBot(NNModel):
             if not user_ids:
                 user_ids = [self.DEFAULT_USER_ID] * len(batch)
             for user_id, user_text in zip(user_ids, batch):
-                user_text: str
+                user_text: Union[str, Dict]
                 res.append(self._realtime_infer(user_id, user_text))
 
         return res

@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import List
+from typing import List, Union, Dict
 
 from deeppavlov import Chainer
 from deeppavlov.core.data.simple_vocab import SimpleVocabulary
@@ -46,7 +46,7 @@ class NLUManager(NLUManagerInterface):
                       f"tokenizer={tokenizer}, slot_filler={slot_filler}, "
                       f"intent_classifier={intent_classifier}, debug={debug}")
 
-    def nlu(self, text: str) -> NLUResponse:
+    def nlu(self, text: Union[str, Dict]) -> NLUResponse:
         """
         Extracts slot values and intents from text.
 
@@ -57,15 +57,36 @@ class NLUManager(NLUManagerInterface):
             an object storing the extracted slos and intents info
         """
         # todo meaningful type hints
-        tokens = self._tokenize_single_text_entry(text)
+
+        if isinstance(text, dict):
+            if "text" in text:
+                text_ = text["text"]
+            else:
+                log.debug("INSIDE nlu() key <text> is missing in the passed dict")
+                text_ = ''
+            tokens = self._tokenize_single_text_entry(text_)
+        else:
+            tokens = self._tokenize_single_text_entry(text)
 
         slots = None
-        if callable(self.slot_filler):
-            slots = self._extract_slots_from_tokenized_text_entry(tokens)
+        if isinstance(text, dict):
+            if "slots" in text:
+                slots = text["slots"]
+            else:
+                log.debug("INSIDE nlu() key <slots> is missing in the passed dict")
+        else:
+            if callable(self.slot_filler):
+                slots = self._extract_slots_from_tokenized_text_entry(tokens)
 
         intents = []
-        if callable(self.intent_classifier):
-            intents = self._extract_intents_from_tokenized_text_entry(tokens)
+        if isinstance(text, dict):
+            if "intents" in text:
+                intents = text["intents"]
+            else:
+                log.debug("INSIDE nlu() key <intents> is missing in the passed dict")
+        else:
+            if callable(self.intent_classifier):
+                intents = self._extract_intents_from_tokenized_text_entry(tokens)
 
         return NLUResponse(slots, intents, tokens)
 
